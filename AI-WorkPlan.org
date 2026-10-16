@@ -1,0 +1,97 @@
+#+title: Work Plan
+#+DATE: <2026-06-10 Wed 13:54>
+#+AUTHOR: Mohsen BANAN
+#+OPTIONS: toc:4
+#+TAGS: me ai aiAndMe
+
+# Provenance (installed once by aiActivity.cs --- not regenerated):
+#   Date:      2026-10-15T23:06:06+00:00
+#   User:      bystar
+#   Templates: /bisos/apps/defaults/ai-templates
+#   Command:   /bisos/venv/py3/devbin/aiActivity.cs -i initiate --activity=bisos-pip
+
+####+BEGIN: b:ai:file/particulars
+* AI Working Context
+  Working Directory: /bisos/git/auth/bxRepos/bisos-pip/prometheus
+  File: /bisos/git/auth/bxRepos/bisos-pip/prometheus/AI-WorkPlan.org
+  Activity: bisos-pip
+  Companion Docs: AI-WORKFLOW.org, AI-Activity.org, AI-DevStatus.org
+####+END:
+
+This Work Plan file drives the AI collaborative development.
+Interactions are broken down into "Stages". Each Stage has a set
+of TODOs that I work with Claude to accomplish.
+
+Note to a fresh Claude: read this file together with AI-WORKFLOW.org,
+AI-Activity.org and AI-DevStatus.org to orient yourself. The =<<Context Confirmation>>=
+TODO below is the standard first step, or use =/bx-confirm0= as the automated equivalent.
+TODOs tagged =:ai:= are assigned to Claude. After completing a TODO, summarize results
+under =----- Results: ------= and mark it DONE.
+
+* Stage 0: Confirm AI's Understanding of This Repo's Context
+
+Goal: Confirm AI's understanding of the context and capture that in [[Context Confirmation]] TODO.
+
+
+* Stage 0 TODOs
+** +
+** LOOP [#A] <<Context Confirmation>> for AI (typically triggered by /bx-confirm0) :aiAndMe:
+SCHEDULED: <2026-06-09 Tue>
+Must be repeated each time a new Claude instance is started here.
+Based on the series of files starting from CLAUDE.md in this repo,
+describe succinctly what you have understood.
+Enumerate explicitly which files you have imported and which you have considered.
+Prompt the user to confirm that the desired/appropriate model (/model) is being used for this project.
+Since this is to be repeated, leave the todo tag as LOOP.
+** -
+
+* Stage 1: Create bisos.prometheus as a CBM package (cbm-package-authorship pattern)
+
+Goal: Prometheus and node_exporter as a hereWeb-collective capability at prometheus.here, on the same
+pattern as bisos.kafka and bisos.grafana, materialized and verified on this host.
+
+
+* Stage 1 TODOs
+** +
+** DONE [#A] <<1.1>> Create the package and materialize it on this host :aiAndMe:
+:PROPERTIES:
+:ORIGIN: Mohsen
+:REPO: this
+:FOUND: <2026-10-15 Thu 22:40>
+:END:
+Fully create bisos.prometheus from the cbm-authoring skill, improving the skill as we go, for a
+consistent pattern of pip CBM packages for common open-source programs. (Asked in a bisos-pip/kafka
+session, together with bisos.grafana.)
+----- Results: ------
+- 2026-10-15. Decided with the user: pinned upstream tarballs (Debian's prometheus is 2.x); usage sbom
+  = promtool; no login (loopback only); rawBisos layer, insecure by design; sudo allowed for this task.
+- bisos.banna: prometheus=24010 (127.0.22.114 prometheus.here), prometheusNodeExporter=24012 (no
+  .here); sysAccts prometheus 504 (node_exporter runs as prometheus, as Debian's package does).
+- Pinned: Prometheus 3.15.0 and node_exporter 1.12.1, amd64, SHA-256 from each release's
+  sha256sums.txt, both checked against a download.
+- Files: prometheusInfo.py; prometheus-sbom.pcs, prometheusUsage-sbom.pcs, prometheusCbs-sbom.pcs;
+  prometheus-sysd.pcs, prometheus-node-exporter-sysd.pcs; prometheus-here-dns.pcs, prometheus-wvd.pcs,
+  prometheus-assemble.cs; prometheus-cbs.pcs, cbmProc-prometheus.spcs; prometheusAdmin.cs,
+  quickPrometheus.cs; tests/verify.sh; README.org; the panel. Skeleton from the new
+  cbmPkgScaffold.sh, .cs files from the new makeCs.py (skill cbm-package-authorship).
+- Installed editable in bisos3; devbin symlinks by hand; setup.py scripts list written in generated form.
+- Materialized: prometheus-cbs.pcs -i cbs_materialize, twice (rc 0, nothing re-downloaded). Both
+  units active; up == 1 for both jobs; http://prometheus.here 200; driftCheck agrees on all three
+  config files, both units and both links; verify.sh passes end to end.
+- NOT done: the CBM leaf in bro_rawBisos (1.2); Blee dblock refresh (1.3).
+** TODO [#B] <<1.2>> Plant the CBM leaf in bro_rawBisos :aiAndMe:
+sys/cbm/collective/hereWeb/prometheus/ (cbmProc.spcs pointing at prometheus-cbs.pcs, cbmProc.control
+available, empty cbmProc.status), then cbm_enable / cbm_materialize. Outside this repo; the airflow leaf
+is the model. bisos.kafka's leaf is not planted either.
+----- Results: ------
+** TODO [#B] <<1.3>> Blee dblock refresh :me:
+setup.py (scripts, requires), the particulars/csInfo blocks of the .cs files, the panel's
+terseTreeNavigator, README.org's TOC.
+----- Results: ------
+** -
+
+
+# Local Variables:
+# eval: (setq-local toc-org-max-depth 4)
+# eval: (setq-local org-log-done 'time)
+# End:

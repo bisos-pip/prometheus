@@ -1,0 +1,39 @@
+#!/usr/bin/env python
+
+""" #+begin_org
+* Panel::  [[file:./py3/panels/bisos.prometheus/_nodeBase_/fullUsagePanel-en.org]]
+* Overview and Relevant Pointers
+prometheus-cbs.pcs
+cbs: Capability Bundle Specification  -- Based on a cba-sysd.cs seed
+ws: An Web Service  --- /Service Component/ --- Prometheus as prometheus.here
+n:  No Data    -- Materialization is purely based on Realm-BPO
+p:  Platform    -- Materialization is based on Platform-BPO (Site-BPO is not used)
+
+The bundle: prometheusCbs-sbom.pcs, which runs prometheus-sbom.pcs (account, Prometheus,
+node_exporter, config) and prometheusUsage-sbom.pcs (promtool); the prometheus and
+prometheus-node-exporter units; and prometheus-assemble.cs (prometheus.here dns + nginx vhost).
+cba_seed takes one sbom, hence prometheusCbs-sbom.pcs rather than both names here.
+#+end_org """
+
+from bisos.capability import cba_sysd_seed
+from bisos.capability import cba_seed
+
+cba_seed.setup(
+    seedType="systemd",  # Extend using cba_sysd_seed.setup
+    loader=None,
+    sbom="prometheusCbs-sbom.pcs",
+    assemble="prometheus-assemble.cs",
+    materialize=None,
+)
+
+# The exporter first, so the server's first scrape finds it.
+sysdUnitsListPrometheus = [
+    cba_sysd_seed.sysdUnit("prometheus-node-exporter", "prometheus-node-exporter-sysd.pcs"),
+    cba_sysd_seed.sysdUnit("prometheus",               "prometheus-sysd.pcs"),
+]
+
+cba_sysd_seed.setup(
+    sysdUnitsList=sysdUnitsListPrometheus,
+)
+
+cba_sysd_seed.plantWithWhich("cba-sysd.cs")

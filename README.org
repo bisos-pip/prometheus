@@ -1,0 +1,268 @@
+#+title: bisos.prometheus: Prometheus and node_exporter via BISOS Capability Bundles
+#+DATE: <2026-10-15 Thu>
+#+AUTHOR: Mohsen BANAN
+#+OPTIONS: toc:4
+
+#+BEGIN: b:org:pypi:readme/topControls :pkgName "prometheus" :comment "basic"
+
+|----------------------+------------------------------------------------------------------|
+| ~Blee Panel Controls~: | [[elisp:(show-all)][Show-All]] : [[elisp:(org-shifttab)][Overview]] : [[elisp:(progn (org-shifttab) (org-content))][Content]] : [[elisp:(delete-other-windows)][(1)]] : [[elisp:(progn (save-buffer) (kill-buffer))][S&Q]] : [[elisp:(save-buffer)][Save]]  : [[elisp:(kill-buffer)][Quit]]  : [[elisp:(bury-buffer)][Bury]] |
+| ~Panel Links~:         | [[file:./py3/panels/bisos.prometheus/_nodeBase_/fullUsagePanel-en.org][Repo Blee Panel]] --  [[file:/bisos/git/auth/bxRepos/bisos-pip/prometheus/py3/panels/bisos.prometheus/_nodeBase_/fullUsagePanel-en.org][Blee Panel]]                                   |
+| ~See Also~:            | [[https://pypi.org/project/bisos.prometheus][At PYPI]] : [[https://github.com/bisos-pip/pycs][bisos.PyCS]]                                             |
+|----------------------+------------------------------------------------------------------|
+
+#+END:
+
+* Overview
+
+/bisos.prometheus/ is a BISOS package for running [[https://prometheus.io][Prometheus]] on a BISOS host,
+together with node_exporter for the host's own metrics, as a BISOS Capability Bundle (CBS/CBM) of
+=systemd=-planted Command Services.
+
+A planted pointer leaf (=cbmProc.spcs=, at =sys/cbm/collective/hereWeb/prometheus/=) subprocess-invokes
+a Capability Bundle Specification (=prometheus-cbs.pcs=). The CBS declares package installation (sboms),
+the two =systemd= units (=prometheus= and =prometheus-node-exporter=), and the assembly step that makes
+Prometheus browsable as =http://prometheus.here=.
+
+Debian packages Prometheus, but trixie's is 2.x and upstream is 3.x. The sbom therefore fetches the
+Prometheus and node_exporter release tarballs from upstream at pinned versions, refusing either one if
+its checksum does not match.
+
+It pairs with [[https://github.com/bisos-pip/grafana][bisos.grafana]], whose provisioned datasource points at
+this Prometheus. Neither package imports the other; both take each other's ports from =bisos.banna=.
+
+#+BEGIN: b:org:pypi:readme/pkgDocumentation :pkgName "prometheus-cs" :comment "basic"
+
+# PYPI Documentation Comes Here in _description.org
+#+END:
+
+* Table of Contents     :TOC:
+- [[#overview][Overview]]
+- [[#the-bisos-prometheus-model][The BISOS Prometheus Model]]
+- [[#what-gets-installed-and-where][What Gets Installed, and Where]]
+- [[#the-3-sboms-server-usage-and-the-cbss][The 3 sboms: Server, Usage, and the CBS's]]
+- [[#the-2-systemd-units][The 2 systemd Units]]
+- [[#listeners-and-ports][Listeners and Ports]]
+- [[#installation][Installation]]
+  - [[#installation-with-pip][Installation With pip]]
+  - [[#installation-with-pipx][Installation With pipx]]
+- [[#usage][Usage]]
+  - [[#materialization][Materialization]]
+  - [[#day-to-day-admin-prometheusadmincs][Day-to-Day Admin: =prometheusAdmin.cs=]]
+  - [[#direct-command-cheat-sheet-quickprometheuscs][Direct Command Cheat Sheet: =quickPrometheus.cs=]]
+  - [[#queries][Queries]]
+- [[#key-files][Key Files]]
+- [[#part-of-bisos--bystar-internet-services-operating-system][Part of BISOS — ByStar Internet Services Operating System]]
+- [[#documentation-and-blee-panels][Documentation and Blee-Panels]]
+- [[#support][Support]]
+- [[#planned-improvements][Planned Improvements]]
+
+* The BISOS Prometheus Model
+
+=bisos.prometheus= (=/bisos/git/bxRepos/bisos-pip/prometheus=) packages Prometheus 3.15.0 and
+node_exporter 1.12.1 as a hereWeb CBS/CBM, the BISOS way rather than through Debian's 2.x package or a
+container. It is built on the same pattern as =bisos.kafka= and =bisos.grafana= (the =cbm-package-authorship=
+skill): one module of facts (=prometheusInfo.py=), pinned and checksummed upstream binaries, config written
+only when absent, a read-only =driftCheck=, a service sbom and a usage sbom joined only by the CBS.
+
+Out of the box Prometheus scrapes itself and this host's node_exporter. It is for the rawBisos layer:
+convenient and insecure by design (no authentication; loopback only). Securing it is a separate layer.
+
+*As of 2026-10-15 it is materialized on one host* (Debian 13): both units active, both targets up,
+=http://prometheus.here= 200, =driftCheck= agrees.
+
+* What Gets Installed, and Where
+
+Every fact below lives in one place, =py3/bisos/prometheus/prometheusInfo.py=, which the sboms, the
+units, the dns and vhost files and the admin CS all read.
+
+| What                          | Where                                              | Owner               |
+|-------------------------------+----------------------------------------------------+---------------------|
+| The =prometheus= account        | uid/gid 504, from bisos.banna =sysAccts=             | ---                 |
+| Prometheus 3.15.0 (+ promtool) | =/opt/prometheus/prometheus-3.15.0.linux-amd64=      | root                |
+| Active Prometheus             | =/opt/prometheus/current= -> the above               | root                |
+| node_exporter 1.12.1          | =/opt/prometheus/node_exporter-1.12.1.linux-amd64=   | root                |
+| Active node_exporter          | =/opt/prometheus/node_exporter= -> the above         | root                |
+| Scrape config                 | =/etc/prometheus/prometheus.yml=                     | root:prometheus 640 |
+| Server flags                  | =/etc/default/prometheus= (=ARGS==)                    | root:prometheus 640 |
+| Exporter flags                | =/etc/default/prometheus-node-exporter= (=ARGS==)      | root:prometheus 640 |
+| The TSDB                      | =/var/lib/prometheus/data= (15 days)                 | prometheus 750      |
+
+The account's numbers come from banna's registry, not from =useradd='s per-host choice, so =prometheus=
+is 504 on every platform. node_exporter runs as the same account, as Debian's package does.
+
+The three config files are written only when absent, so hand overrides survive re-runs of the sbom.
+=prometheusAdmin.cs -i driftCheck= reports how a live file differs from what its generator would write.
+The sbom checks =prometheus.yml= with =promtool check config= after writing it.
+
+Only amd64 has a pinned checksum today; the sbom refuses another architecture rather than guess.
+
+* The 3 sboms: Server, Usage, and the CBS's
+
+| sbom                        | Installs                                         | Pulls in        |
+|-----------------------------+--------------------------------------------------+-----------------|
+| =prometheus-sbom.pcs=         | the account, Prometheus, node_exporter, config   | nothing         |
+| =prometheusUsage-sbom.pcs=    | promtool (from the same pinned tarball)          | nothing         |
+| =prometheusCbs-sbom.pcs=      | nothing of its own                               | the two above   |
+
+The server sbom does not pull in the usage sbom: materializing only the server is a normal case, and a
+host that only queries a remote Prometheus runs only the usage sbom. The CBS is what does both, through
+=prometheusCbs-sbom.pcs=, because a CBS names one sbom. Python libraries (=prometheus-client= to expose
+metrics, =prometheus-api-client= to query) go into each consumer's own venv.
+
+* The 2 systemd Units
+
+| Unit                                | Runs                                      | Ordering               |
+|-------------------------------------+-------------------------------------------+------------------------|
+| =prometheus-node-exporter-sysd.pcs=   | =node_exporter $ARGS=                       | =After=network.target=   |
+| =prometheus-sysd.pcs=                 | =prometheus $ARGS=; =reload= sends SIGHUP     | =After=network.target=   |
+
+Both run as =User=prometheus=. The exporter is listed first in the CBS, so the server's first scrape
+finds it. Logs go to journald.
+
+* Listeners and Ports
+
+Ports are assigned in =bisos.banna= (=tcpPorts.py=), never hardcoded. Every listener binds loopback
+only: neither Prometheus nor node_exporter has authentication.
+
+| Listener                  | Address                 | banna name               |
+|---------------------------+-------------------------+--------------------------|
+| Prometheus (UI, HTTP API) | =127.0.0.1:24010=         | =prometheus=               |
+| node_exporter (=/metrics=)  | =127.0.0.1:24012=         | =prometheusNodeExporter=   |
+| Prometheus, via nginx     | =http://prometheus.here= | --- (127.0.22.114)       |
+
+* Installation
+
+The sources for the bisos.prometheus pip package are maintained at:\\
+https://github.com/bisos-pip/prometheus
+
+The bisos.prometheus pip package is available at PYPI as\\
+https://pypi.org/project/bisos.prometheus
+
+You can install bisos.prometheus with pip or pipx.
+
+** Installation With pip
+
+If you need access to bisos.prometheus as a python module, install it with pip:
+
+#+begin_src bash
+pip install bisos.prometheus
+#+end_src
+
+** Installation With pipx
+
+If you only need access to bisos.prometheus on the command line, install it with pipx:
+
+#+begin_src bash
+pipx install bisos.prometheus
+#+end_src
+
+The following commands are made available:
+
+- =prometheusAdmin.cs= --- day-to-day admin CS for this host's =prometheus.here= installation.
+- =quickPrometheus.cs= --- direct-command cheat sheet: promtool, the HTTP API, the two units.
+- =prometheus-assemble.cs= --- assembly step: =prometheus.here= dns entry and nginx vhost.
+- =cbmProc-prometheus.spcs= --- planted CBM pointer that materializes the CBS at this host.
+
+The planted =.pcs= files (=prometheus-cbs.pcs=, the three sboms, the two =-sysd.pcs=,
+=prometheus-here-dns.pcs=, =prometheus-wvd.pcs=) are invoked directly from =py3/bin/=.
+
+* Usage
+
+** Materialization
+
+#+begin_src bash
+prometheus-sbom.pcs -i sbom_fullUpdate             # install the server only
+prometheusUsage-sbom.pcs -i sbom_fullUpdate        # install the usage side only (promtool)
+prometheus-cbs.pcs -i cbs_materialize              # both sboms + units + assemble
+cbmProc-prometheus.spcs -i cbm_enable              # at the planted CBM leaf, then:
+cbmProc-prometheus.spcs -i cbm_materialize
+#+end_src
+
+** Day-to-Day Admin: =prometheusAdmin.cs=
+
+#+begin_src bash
+prometheusAdmin.cs -i hostInfo        # fqdn, listeners, install/config/data paths
+prometheusAdmin.cs -i servicesInfo    # links for operating the 2 systemd units
+prometheusAdmin.cs -i queriesInfo     # PromQL through promtool and the HTTP API
+prometheusAdmin.cs -i driftCheck      # read-only: live config, units and links vs prometheusInfo
+prometheusAdmin.cs -i fullUpdate      # the three info Cmnds together
+#+end_src
+
+** Direct Command Cheat Sheet: =quickPrometheus.cs=
+
+#+begin_src bash
+quickPrometheus.cs
+#+end_src
+
+** Queries
+
+#+begin_src bash
+/opt/prometheus/current/promtool query instant http://127.0.0.1:24010 up
+curl -s 'http://prometheus.here/api/v1/query?query=node_load1'
+#+end_src
+
+* Key Files
+
+- =py3/bisos/prometheus/prometheusInfo.py= --- the single source of facts: pinned versions and checksums, paths, ports, the generators of the three config files and the units' identity lines, the tarball-install script, and the drift helpers.
+- =py3/bin/prometheus-cbs.pcs= --- CBS declaring the bundle (sbom + 2 sysd units + assemble).
+- =py3/bin/cbmProc-prometheus.spcs= --- planted CBM pointer leaf that materializes the CBS.
+- =py3/bin/prometheus-sbom.pcs=, =prometheusUsage-sbom.pcs=, =prometheusCbs-sbom.pcs= --- the server, usage and CBS sboms via [[https://github.com/bisos-pip/sbom][bisos.sbom]].
+- =py3/bin/prometheus-sysd.pcs=, =py3/bin/prometheus-node-exporter-sysd.pcs= --- the two units.
+- =py3/bin/prometheus-assemble.cs= --- assembly step (dns + vhost).
+- =py3/bin/prometheus-here-dns.pcs= --- =.here= fake-domain DNS registration for =prometheus.here=.
+- =py3/bin/prometheus-wvd.pcs= --- nginx vhost for =prometheus.here=, proxying to Prometheus on loopback.
+- =py3/bin/prometheusAdmin.cs=, =py3/bin/quickPrometheus.cs= --- admin CS and cheat sheet.
+- =py3/tests/verify.sh= --- smoke test of every command and of =prometheusInfo='s invariants.
+- =py3/setup.py=, =py3/pypiProc.sh= --- PyPI packaging (setup.py is dblock-driven; do not hand-edit).
+
+* Part of BISOS — ByStar Internet Services Operating System
+
+Layered on top of Debian, *BISOS* (By* Internet Services Operating System)
+is a unified and universal framework for developing both internet services and
+software-service continuums that use internet services. See
+[[https://github.com/bxGenesis/start][Bootstrapping ByStar, BISOS and Blee]]
+for information about getting started with BISOS.
+
+*BISOS* is a foundation for *The Libre-Halaal ByStar Digital Ecosystem* which
+is described as a cure for losses of autonomy and privacy in a book titled:
+[[https://github.com/bxplpc/120033][Nature of Polyexistentials]]
+
+/bisos.prometheus/ is part of BISOS. It is a standalone package that can
+be used independently of the full BISOS environment.
+
+* Documentation and Blee-Panels
+
+bisos.prometheus is part of the ByStar Digital Ecosystem
+[[http://www.by-star.net]].
+
+This module's primary documentation is in the form of Blee-Panels.
+Blee-Panels are in the =./py3/panels= directory. From within Blee and
+BISOS these panels are accessible under the Blee "Panels" menu.
+
+See [[file:./py3/panels/bisos.prometheus/_nodeBase_/fullUsagePanel-en.org]]
+for a starting point.
+
+/bisos.prometheus/ is best developed with [[https://github.com/bx-blee][Blee]], the /By* BISOS
+Libre-Halaal Emacs Environment/ --- a layer on top of Emacs and BISOS
+which creates a comprehensive integrated usage and development
+environment.
+
+* Support
+
+For support, criticism, comments and questions; please contact the
+author/maintainer\\
+[[http://mohsen.1.banan.byname.net][Mohsen Banan]] at:
+[[http://mohsen.1.banan.byname.net/contact]]
+
+* Planned Improvements
+
+** TODO The "secure it" layer: a login in front of prometheus.here, listening beyond loopback
+** TODO Architectures other than amd64 (pin each one's checksum in prometheusInfo)
+** TODO Alertmanager, as a second capability of this package or one of its own
+** TODO Plant the CBM leaf in bro_rawBisos (=sys/cbm/collective/hereWeb/prometheus/=)
+
+
+# Local Variables:
+# eval: (setq-local toc-org-max-depth 4)
+# End:

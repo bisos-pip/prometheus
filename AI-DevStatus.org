@@ -1,0 +1,83 @@
+#+title: Development Status & Continuation Handoff
+#+TAGS: me ai aiAndMe
+
+# Provenance (installed once by aiActivity.cs --- not regenerated):
+#   Date:      2026-10-15T23:06:06+00:00
+#   User:      bystar
+#   Templates: /bisos/apps/defaults/ai-templates
+#   Command:   /bisos/venv/py3/devbin/aiActivity.cs -i initiate --activity=bisos-pip
+
+####+BEGIN: b:ai:file/particulars
+* AI Working Context
+  Working Directory: /bisos/git/auth/bxRepos/bisos-pip/prometheus
+  File: /bisos/git/auth/bxRepos/bisos-pip/prometheus/AI-DevStatus.org
+  Activity: bisos-pip
+  Companion Docs: AI-WORKFLOW.org, AI-Activity.org, AI-DevStatus.org
+####+END:
+
+Last updated: 2026-10-15 (package created and materialized on one host).
+
+This file is a working-state handoff so development can continue on another
+machine (which has this repo but NOT the developer's =~=). It captures the
+architecture, what works, what is untested and the design decisions made so far.
+
+This file is maintained by Claude. Updates are typically triggered by the
+=/bx-status-update= slash command, after major interactions, or before a release.
+
+* Current State
+  - bisos.prometheus packages Prometheus 3.15.0 and node_exporter 1.12.1 as a hereWeb-collective
+    CBS/CBM, browsed as http://prometheus.here. Created 2026-10-15 in one session together with
+    bisos.grafana, on the pattern now in the cbm-package-authorship skill. Installed editable in bisos3.
+  - Materialized on this host (Debian 13) by prometheus-cbs.pcs -i cbs_materialize: both units active,
+    both scrape targets up, driftCheck agrees. Not committed yet.
+  - rawBisos layer: convenient and insecure by design (no authentication, loopback only). A "secure it"
+    layer on top is future work.
+
+* Architecture
+  - py3/bisos/prometheus/prometheusInfo.py --- the single source of facts: pinned versions and
+    per-architecture checksums, paths, banna ports, generators of prometheus.yml and the two
+    EnvironmentFiles, tarballSetupScript(), kvDrift/textDrift/unitDrift.
+  - Layout: /opt/prometheus/{prometheus-3.15.0.linux-amd64, current ->, node_exporter-1.12.1.linux-amd64,
+    node_exporter ->} root; /etc/prometheus/prometheus.yml, /etc/default/prometheus{,-node-exporter}
+    root:prometheus 640; /var/lib/prometheus/data prometheus 750.
+  - py3/bin: prometheus-sbom.pcs (server), prometheusUsage-sbom.pcs (promtool), prometheusCbs-sbom.pcs
+    (both, for the CBS); prometheus-node-exporter-sysd.pcs, prometheus-sysd.pcs; prometheus-here-dns.pcs,
+    prometheus-wvd.pcs, prometheus-assemble.cs; prometheus-cbs.pcs; cbmProc-prometheus.spcs;
+    prometheusAdmin.cs (hostInfo, servicesInfo, queriesInfo, driftCheck, fullUpdate); quickPrometheus.cs.
+  - Ports (bisos.banna): prometheus=24010, prometheusNodeExporter=24012; both bind 127.0.0.1.
+    prometheus.here -> 127.0.22.114 -> nginx :80 -> 127.0.0.1:24010.
+  - Account prometheus uid/gid 504 (bisos.banna.sysAccts).
+
+* What Works
+  Verified on this host, 2026-10-15:
+  - cbs_materialize (twice; the second a no-op), both units active as prometheus 504.
+  - promtool query instant: up{job="prometheus"} 1, up{job="node"} 1; node_load1 through
+    http://prometheus.here; http://prometheus.here/ 200 (redirects to /query).
+  - driftCheck: prometheus.yml, both env files, both units' identity lines, both links agree.
+  - verify.sh end to end (bash -i, lpDo), all invariants PASS.
+  - bisos.grafana's provisioned datasource queries it (Grafana's datasource health: OK).
+
+* What Is Untested
+  - cbm_materialize at a planted CBM leaf (no leaf planted yet; cbs_materialize was run directly).
+  - A second platform; Debian 12; any architecture but amd64 (refused by design until pinned).
+  - Restart after a reboot; an upgrade (bump version + checksum, re-run the sbom: unpack + link flip).
+  - py3/tests/verify.sh passes end to end on this host; not in the RawBisos Vagrant reconstruction.
+  - prometheusUsage-sbom.pcs alone on a host without the server.
+
+* Key Design Decisions
+  - Upstream tarballs, pinned + SHA-256 per Debian architecture, not Debian's 2.x package.
+  - node_exporter is part of this capability (the server scrapes it out of the box) and runs as the
+    prometheus account, as Debian's package does; its port has no .here name.
+  - Usage side = promtool, which ships only in the Prometheus tarball: the usage sbom unpacks the same
+    pinned tarball (whichever sbom runs first unpacks it). Python libraries (prometheus-client,
+    prometheus-api-client) belong to each consumer's venv.
+  - No login: loopback-only listeners; nginx proxies to 127.0.0.1, not to the .here address.
+  - Flags in /etc/default/* as ARGS, expanded by $ARGS (word-split) in ExecStart; ExecReload=SIGHUP.
+  - Config written only when absent; driftCheck reports (unified diff for YAML) instead of overwriting.
+  - Out of chain: the pattern is the cbm-package-authorship skill
+    (/bisos/git/bxRepos/bisos/defaults/ai-templates/bisos-pip/_skills/, under git); the shared-code
+    duplication and two framework findings are in AI-Outputs.org (blee-binders/evolution, under git).
+
+# Local Variables:
+# eval: (setq-local toc-org-max-depth 4)
+# End:

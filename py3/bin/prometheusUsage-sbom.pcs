@@ -1,0 +1,117 @@
+#!/usr/bin/env python
+
+""" #+begin_org
+* Panel::  [[file:./py3/panels/bisos.prometheus/_nodeBase_/fullUsagePanel-en.org]]
+* Overview and Relevant Pointers
+prometheusUsage-sbom.pcs: software bill of materials of the usage side of the Prometheus
+capability --- what a host needs to use a Prometheus server, local or remote, as opposed to
+run one. That is promtool: queries, and checks of configs and rules. promtool ships only in
+the Prometheus release tarball, so this sbom unpacks the same pinned tarball the server sbom
+does (whichever runs first unpacks it; the other finds it there).
+It does not need the server. prometheus-sbom.pcs does not pull this sbom in;
+prometheusCbs-sbom.pcs, the sbom of prometheus-cbs.pcs, runs both.
+#+end_org """
+
+from bisos import b
+from bisos.b import cs
+from bisos.b import b_io
+
+from bisos.sbom import pkgsSeed  # pkgsSeed.plantWithWhich("seedSbom.cs")
+from bisos.prometheus.prometheusInfo import prometheusInfo, promDistSetupScript
+
+ap = pkgsSeed.aptPkg
+
+
+def _bash(script: str) -> b.op.Outcome:
+    outcome = b.subProc.WOpW(invedBy=None, log=1).bash(script)
+    if outcome.isProblematic():
+        b_io.eh.badOutcome(outcome)
+    return outcome
+
+
+def promtoolSetup():
+    """The pinned Prometheus tarball, for its promtool. Not an apt package. Idempotent."""
+    return _bash(promDistSetupScript())
+
+
+aptPkgsList = [
+    ap("curl"),                                     # Fetches the upstream tarball
+    ap("promtoolSetup", func=promtoolSetup),        # after curl
+]
+
+# No pip packages: Python clients (prometheus-client, to expose metrics; prometheus-api-client,
+# to query) install into each consumer's own virtenv, through that consumer's sbom.
+
+pkgsSeed.setup(
+    aptPkgsList=aptPkgsList,
+)
+
+
+####+BEGIN: b:py3:cs:cmnd/classHead :cmndName "readme" :extent "verify" :comment "Describe" :parsMand "" :parsOpt "" :argsMin 0 :argsMax 0 :pyInv ""
+""" #+begin_org
+*  _[[elisp:(blee:menu-sel:outline:popupMenu)][±]]_ _[[elisp:(blee:menu-sel:navigation:popupMenu)][Ξ]]_ [[elisp:(outline-show-branches+toggle)][|=]] [[elisp:(bx:orgm:indirectBufOther)][|>]] *[[elisp:(blee:ppmm:org-mode-toggle)][|N]]*  CmndSvc-   [[elisp:(outline-show-subtree+toggle)][||]] <<readme>>  *Describe*  =verify= ro=cli   [[elisp:(org-cycle)][| ]]
+#+end_org """
+class readme(cs.Cmnd):
+    cmndParamsMandatory = [ ]
+    cmndParamsOptional = [ ]
+    cmndArgsLen = {'Min': 0, 'Max': 0,}
+
+    @cs.track(fnLoc=True, fnEntry=True, fnExit=True)
+    def cmnd(self,
+             rtInv: cs.RtInvoker,
+             cmndOutcome: b.op.Outcome,
+    ) -> b.op.Outcome:
+        """Describe"""
+        failed = b_io.eh.badOutcome
+        callParamsDict = {}
+        if self.invocationValidate(rtInv, cmndOutcome, callParamsDict, None).isProblematic():
+            return failed(cmndOutcome)
+####+END:
+        descriptionStr = f"""\
+** Scope: the usage side of the Prometheus capability -- what a host needs to use a
+   Prometheus server (this host's or another's), not to run one. Part of bisos.prometheus.
+
+** What this installs:
+  1) apt package: curl.
+  2) promtoolSetup: {prometheusInfo.distUrl()}
+     verified by SHA-256, with {prometheusInfo.homeLink} pointing at it, for
+     {prometheusInfo.promtool}. The same tarball as the server's; unpacked once.
+
+** Standalone: this sbom does not need the server. prometheus-sbom.pcs does not pull it in;
+   prometheus-cbs.pcs runs both, through prometheusCbs-sbom.pcs.
+
+** What this does NOT do:
+  - It installs no Python libraries; those belong to each consumer's virtenv:
+    prometheus-client (expose metrics), prometheus-api-client (query).
+
+       prometheusUsage-sbom.pcs -i sbom_fullUpdate\
+"""
+        print(descriptionStr)
+
+        return cmndOutcome.set(
+            opError=b.op.OpError.Success,
+            opResults=None,
+        )
+
+
+def examples_csu() -> b.op.Outcome:
+    """Common Usage Examples for this Command-Service Unit"""
+
+    cmnd = cs.examples.cmndEnter
+    literal = cs.examples.execInsert
+
+    cmndOutcome = b.op.Outcome()
+
+    cs.examples.menuChapter('*Prometheus Usage -- sbom Examples*')
+    cmnd('readme', comment=" # An overview short description")
+
+    cs.examples.menuChapter('*Installation*')
+    literal("prometheusUsage-sbom.pcs -i sbom_fullUpdate")
+
+    cs.examples.menuChapter('*Use It*')
+    literal(f"{prometheusInfo.promtool} --version")
+    literal(f"{prometheusInfo.promtool} query instant {prometheusInfo.localUrl} up")
+    literal(f"{prometheusInfo.promtool} check metrics < <(curl -s http://{prometheusInfo.nodeExporterAddr}/metrics)")
+
+    cs.examples.menuChapter('*End-Of Prometheus Usage -- sbom Examples*')
+    return cmndOutcome

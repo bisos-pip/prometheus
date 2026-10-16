@@ -1,0 +1,52 @@
+#!/usr/bin/env python
+
+####+BEGIN: b:prog:file/particulars :authors ("./inserts/authors-mb.org")
+""" #+begin_org
+* *[[elisp:(org-cycle)][| Particulars |]]* :: Authors, version
+** This File: /bisos/git/bxRepos/bisos-pip/prometheus/py3/bin/prometheus-sysd.pcs
+** Authors: Mohsen BANAN, http://mohsen.banan.1.byname.net/contact
+#+end_org """
+####+END:
+
+""" #+begin_org
+* Panel::  [[file:./py3/panels/bisos.prometheus/_nodeBase_/fullUsagePanel-en.org]]
+* Overview and Relevant Pointers
+The prometheus.service unit. Flags come from ARGS in /etc/default/prometheus, expanded as
+separate words ($ARGS). ExecReload= sends SIGHUP: Prometheus re-reads prometheus.yml.
+#+end_org """
+
+from bisos.debian import systemd_seedInfo
+from bisos.debian import systemd_seed as systemd_seed  # noqa
+
+from bisos.prometheus.prometheusInfo import prometheusInfo, sysdServiceLines
+
+def sysdUnitFileFunc() -> str | None:
+    """Produce the unit file as a string."""
+
+    # Not on PATH: the binary lives under prometheusInfo.homeLink, so whichBinPath() cannot find it.
+    if not ( execPath := prometheusInfo.promBin ).exists():
+        return None
+
+    templateStr = f"""
+[Unit]
+Description=Prometheus monitoring server
+After=network.target
+
+[Service]
+Type=simple
+{sysdServiceLines(prometheusInfo.envFile)}ExecStart={execPath} $ARGS
+ExecReload=/bin/kill -HUP $MAINPID
+TimeoutStopSec=60
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+"""
+    return templateStr
+
+systemd_seedInfo.setup(
+    seedType="sysdSysUnit",
+    sysdUnitName="prometheus",
+    sysdUnitFileFunc=sysdUnitFileFunc,
+)
