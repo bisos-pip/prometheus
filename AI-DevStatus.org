@@ -75,7 +75,7 @@ This file is maintained by Claude. Updates are typically triggered by the
   - Flags in /etc/default/* as ARGS, expanded by $ARGS (word-split) in ExecStart; ExecReload=SIGHUP.
   - Config written only when absent; driftCheck reports (unified diff for YAML) instead of overwriting.
   - Out of chain: the pattern is the cbm-package-authorship skill
-    (/bisos/git/bxRepos/bisos/defaults/ai-templates/bisos-pip/_skills/, under git); the shared-code
+    (/bisos/git/bxRepos/bisos/defaults/ai-templates/mother/_skills/, under git); the shared-code
     duplication and two framework findings are in AI-Outputs.org (blee-binders/evolution, under git).
 
 # Local Variables:
