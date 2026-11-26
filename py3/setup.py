@@ -43,7 +43,7 @@ def longDescription():
 # b:py3:pypi:setup/version Arguments  :forSys t :forPyPi t :constant "666"
 ####+BEGIN: b:py3:pypi:setup/version :comment "Auto Detected"
 
-# ./pypiUploadVer DID NOT exist -- forPypiVersion=0.1 -- forLocalVersion=0.1 -- constant=NA
+# ./pypiUploadVer DID NOT exist -- forPypiVersion=0.11 -- forLocalVersion=0.1 -- constant=NA
 def pkgVersion():
         return '0.1'
 
@@ -52,7 +52,7 @@ def pkgVersion():
 # b:py3:pypi:setup/requires :extras ; :requirements "requirements.txt" (bring here requirements.txt)
 ####+BEGIN: b:py3:pypi:setup/requires :extras ()
 
-requires = [ 
+requires = [
 "bisos",
 "bisos.b",
 "bisos.banna",
@@ -73,18 +73,18 @@ requires = [
 # b:py3:pypi:setup/scripts :comment
 ####+BEGIN: b:py3:pypi:setup/scripts :comment ""
 
-scripts = [ 
+scripts = [
 'bin/cbmProc-prometheus.spcs',
+'bin/prometheusAdmin.cs',
 'bin/prometheus-assemble.cs',
 'bin/prometheus-cbs.pcs',
+'bin/prometheusCbs-sbom.pcs',
 'bin/prometheus-here-dns.pcs',
 'bin/prometheus-node-exporter-sysd.pcs',
 'bin/prometheus-sbom.pcs',
 'bin/prometheus-sysd.pcs',
-'bin/prometheus-wvd.pcs',
-'bin/prometheusAdmin.cs',
-'bin/prometheusCbs-sbom.pcs',
 'bin/prometheusUsage-sbom.pcs',
+'bin/prometheus-wvd.pcs',
 'bin/quickPrometheus.cs',
 ]
 ####+END:
@@ -92,7 +92,7 @@ scripts = [
 # b:py3:pypi:setup/dataFiles :comment
 ####+BEGIN: b:py3:pypi:setup/dataFiles :comment "Instead of ./MANIFEST.in or in pyproject.toml"
 
-data_files = [ 
+data_files = [
 ('',  ['lh-agpl3-LICENSE.txt', '_description.org', 'README.rst']),
 ]
 ####+END:
