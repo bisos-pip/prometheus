@@ -55,7 +55,7 @@ cases = [
     ('banna sysAccts: prometheus uid',  sysAccts.sysAcctOf(i.acctName).uid == 504),
     ('banna sysAccts: homeDir',         sysAccts.sysAcctOf(i.acctName).homeDir == str(i.dataDir.parent)),
     ('server on loopback',              f'--web.listen-address=127.0.0.1:{i.portNu}' in envFileContent()),
-    ('links point at prometheus.here',  '--web.external-url=http://prometheus.here/' in envFileContent()),
+    ('links point at prometheus.internal',  '--web.external-url=http://prometheus.internal/' in envFileContent()),
     ('exporter on loopback',            f'127.0.0.1:{i.nodeExporterPortNu}' in nodeExporterEnvFileContent()),
     ('scrapes itself and the exporter', i.listenAddr in configFileContent() and i.nodeExporterAddr in configFileContent()),
     ('tarball scripts parse',           all(subprocess.run(['bash', '-n'], input=s, text=True).returncode == 0

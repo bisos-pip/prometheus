@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """ #+begin_org
-* ~[Summary]~ :: A =CmndSvc= for assembling prometheus.here: the .here dns entry and the nginx vhost of Prometheus.
+* ~[Summary]~ :: A =CmndSvc= for assembling prometheus.internal: the .internal dns entry and the nginx vhost of Prometheus.
 #+end_org """
 
 ####+BEGIN: b:py3:cs:file/dblockControls :classification "cs-mu"
@@ -51,7 +51,7 @@ csInfo['cmndParts'] = 'IcmCmndParts[common] IcmCmndParts[param]'
 * [[elisp:(org-cycle)][| ~Description~ |]] :: [[file:/bisos/git/auth/bxRepos/blee-binders/bisos-core/PyFwrk/bisos-pip/bisos.cs/_nodeBase_/fullUsagePanel-en.org][BISOS CmndSvcs Panel]]   [[elisp:(org-cycle)][| ]]
 
 This is the assemble step of prometheus-cbs.pcs: after the sbom has installed Prometheus
-and node_exporter, it registers =prometheus.here= (prometheus-here-dns.pcs) and installs and
+and node_exporter, it registers =prometheus.internal= (prometheus-here-dns.pcs) and installs and
 enables its nginx vhost (prometheus-wvd.pcs), which proxies to Prometheus on loopback.
 
 ** Status: Starting point
@@ -171,8 +171,8 @@ class examples(cs.Cmnd):
         #
 
         cs.examples.menuChapter('=Activation Commands=')
-        cmnd('hereDns', comment=" # prometheus.here in /etc/hosts")
-        cmnd('webVirtDom', comment=" # prometheus.here nginx vhost -> Prometheus")
+        cmnd('hereDns', comment=" # prometheus.internal in /etc/hosts")
+        cmnd('webVirtDom', comment=" # prometheus.internal nginx vhost -> Prometheus")
 
         cs.examples.menuChapter('=Full Update=')
         cmnd('fullUpdate', comment=" # hereDns + webVirtDom")

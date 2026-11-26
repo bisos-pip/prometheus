@@ -22,7 +22,7 @@ together with node_exporter for the host's own metrics, as a BISOS Capability Bu
 A planted pointer leaf (=cbmProc.spcs=, at =sys/cbm/collective/hereWeb/prometheus/=) subprocess-invokes
 a Capability Bundle Specification (=prometheus-cbs.pcs=). The CBS declares package installation (sboms),
 the two =systemd= units (=prometheus= and =prometheus-node-exporter=), and the assembly step that makes
-Prometheus browsable as =http://prometheus.here=.
+Prometheus browsable as =http://prometheus.internal=.
 
 Debian packages Prometheus, but trixie's is 2.x and upstream is 3.x. The sbom therefore fetches the
 Prometheus and node_exporter release tarballs from upstream at pinned versions, refusing either one if
@@ -69,7 +69,7 @@ Out of the box Prometheus scrapes itself and this host's node_exporter. It is fo
 convenient and insecure by design (no authentication; loopback only). Securing it is a separate layer.
 
 *As of 2026-10-15 it is materialized on one host* (Debian 13): both units active, both targets up,
-=http://prometheus.here= 200, =driftCheck= agrees.
+=http://prometheus.internal= 200, =driftCheck= agrees.
 
 * What Gets Installed, and Where
 
@@ -129,7 +129,7 @@ only: neither Prometheus nor node_exporter has authentication.
 |---------------------------+-------------------------+--------------------------|
 | Prometheus (UI, HTTP API) | =127.0.0.1:24010=         | =prometheus=               |
 | node_exporter (=/metrics=)  | =127.0.0.1:24012=         | =prometheusNodeExporter=   |
-| Prometheus, via nginx     | =http://prometheus.here= | --- (127.0.22.114)       |
+| Prometheus, via nginx     | =http://prometheus.internal= | --- (127.0.22.114)       |
 
 * Installation
 
@@ -159,9 +159,9 @@ pipx install bisos.prometheus
 
 The following commands are made available:
 
-- =prometheusAdmin.cs= --- day-to-day admin CS for this host's =prometheus.here= installation.
+- =prometheusAdmin.cs= --- day-to-day admin CS for this host's =prometheus.internal= installation.
 - =quickPrometheus.cs= --- direct-command cheat sheet: promtool, the HTTP API, the two units.
-- =prometheus-assemble.cs= --- assembly step: =prometheus.here= dns entry and nginx vhost.
+- =prometheus-assemble.cs= --- assembly step: =prometheus.internal= dns entry and nginx vhost.
 - =cbmProc-prometheus.spcs= --- planted CBM pointer that materializes the CBS at this host.
 
 The planted =.pcs= files (=prometheus-cbs.pcs=, the three sboms, the two =-sysd.pcs=,
@@ -199,7 +199,7 @@ quickPrometheus.cs
 
 #+begin_src bash
 /opt/prometheus/current/promtool query instant http://127.0.0.1:24010 up
-curl -s 'http://prometheus.here/api/v1/query?query=node_load1'
+curl -s 'http://prometheus.internal/api/v1/query?query=node_load1'
 #+end_src
 
 * Key Files
@@ -210,8 +210,8 @@ curl -s 'http://prometheus.here/api/v1/query?query=node_load1'
 - =py3/bin/prometheus-sbom.pcs=, =prometheusUsage-sbom.pcs=, =prometheusCbs-sbom.pcs= --- the server, usage and CBS sboms via [[https://github.com/bisos-pip/sbom][bisos.sbom]].
 - =py3/bin/prometheus-sysd.pcs=, =py3/bin/prometheus-node-exporter-sysd.pcs= --- the two units.
 - =py3/bin/prometheus-assemble.cs= --- assembly step (dns + vhost).
-- =py3/bin/prometheus-here-dns.pcs= --- =.here= fake-domain DNS registration for =prometheus.here=.
-- =py3/bin/prometheus-wvd.pcs= --- nginx vhost for =prometheus.here=, proxying to Prometheus on loopback.
+- =py3/bin/prometheus-here-dns.pcs= --- =.internal= fake-domain DNS registration for =prometheus.internal=.
+- =py3/bin/prometheus-wvd.pcs= --- nginx vhost for =prometheus.internal=, proxying to Prometheus on loopback.
 - =py3/bin/prometheusAdmin.cs=, =py3/bin/quickPrometheus.cs= --- admin CS and cheat sheet.
 - =py3/tests/verify.sh= --- smoke test of every command and of =prometheusInfo='s invariants.
 - =py3/setup.py=, =py3/pypiProc.sh= --- PyPI packaging (setup.py is dblock-driven; do not hand-edit).
@@ -257,7 +257,7 @@ author/maintainer\\
 
 * Planned Improvements
 
-** TODO The "secure it" layer: a login in front of prometheus.here, listening beyond loopback
+** TODO The "secure it" layer: a login in front of prometheus.internal, listening beyond loopback
 ** TODO Architectures other than amd64 (pin each one's checksum in prometheusInfo)
 ** TODO Alertmanager, as a second capability of this package or one of its own
 ** TODO Plant the CBM leaf in bro_rawBisos (=sys/cbm/collective/hereWeb/prometheus/=)

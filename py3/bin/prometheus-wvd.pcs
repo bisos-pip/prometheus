@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """ #+begin_org
-* ~[Summary]~ :: A =PlantedCmndService= for prometheus.here NGINX virtual-host (capWebVd) --- fronts Prometheus
+* ~[Summary]~ :: A =PlantedCmndService= for prometheus.internal NGINX virtual-host (capWebVd) --- fronts Prometheus
 #+end_org """
 
 from bisos.b import cs
@@ -16,7 +16,7 @@ from bisos.prometheus.prometheusInfo import prometheusInfo
 
 serverName = prometheusInfo.fqdn
 # Prometheus has no authentication, so it binds prometheusInfo.listenIp (loopback) only,
-# and nginx proxies to that address rather than to the prometheus.here one.
+# and nginx proxies to that address rather than to the prometheus.internal one.
 proxyIp = prometheusInfo.listenIp
 proxyPort = prometheusInfo.portNu
 

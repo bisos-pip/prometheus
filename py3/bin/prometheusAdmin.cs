@@ -3,7 +3,7 @@
 
 """ #+begin_org
 * ~[Summary]~ :: A =CmndSvc= for admin-facing information about this host's
-  =prometheus.here= Prometheus + node_exporter installation: listeners, service status,
+  =prometheus.internal= Prometheus + node_exporter installation: listeners, service status,
   paths, PromQL queries and config drift.
 #+end_org """
 
@@ -52,7 +52,7 @@ csInfo['cmndParts'] = 'IcmCmndParts[common] IcmCmndParts[param]'
 """ #+begin_org
 * [[elisp:(org-cycle)][| ~Description~ |]] :: [[file:/bisos/git/auth/bxRepos/blee-binders/bisos-core/PyFwrk/bisos-pip/bisos.cs/_nodeBase_/fullUsagePanel-en.org][BISOS CmndSvcs Panel]]   [[elisp:(org-cycle)][| ]]
 
-This is an admin-facing =CmndSvc= for this host's =prometheus.here= installation ---
+This is an admin-facing =CmndSvc= for this host's =prometheus.internal= installation ---
 the Prometheus server and this host's node_exporter: the listeners and where things live,
 links for operating the =prometheus-sysd.pcs= and =prometheus-node-exporter-sysd.pcs= units,
 PromQL queries through promtool and the HTTP API, and a read-only =driftCheck= of the live
@@ -314,7 +314,7 @@ class servicesInfo(cs.Cmnd):
         literal("systemctl status prometheus.service")
         literal("systemctl reload prometheus.service   # SIGHUP: re-reads prometheus.yml")
 
-        cs.examples.menuSection('/prometheus.here -- dns and nginx vhost/')
+        cs.examples.menuSection('/prometheus.internal -- dns and nginx vhost/')
         literal("prometheus-here-dns.pcs -i dnsCap_verify")
         literal("prometheus-wvd.pcs -i webVd_verify")
         literal("prometheus-assemble.cs -i fullUpdate   # both of the above, updated")

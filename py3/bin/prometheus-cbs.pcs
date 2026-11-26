@@ -5,13 +5,13 @@
 * Overview and Relevant Pointers
 prometheus-cbs.pcs
 cbs: Capability Bundle Specification  -- Based on a cba-sysd.cs seed
-ws: An Web Service  --- /Service Component/ --- Prometheus as prometheus.here
+ws: An Web Service  --- /Service Component/ --- Prometheus as prometheus.internal
 n:  No Data    -- Materialization is purely based on Realm-BPO
 p:  Platform    -- Materialization is based on Platform-BPO (Site-BPO is not used)
 
 The bundle: prometheusCbs-sbom.pcs, which runs prometheus-sbom.pcs (account, Prometheus,
 node_exporter, config) and prometheusUsage-sbom.pcs (promtool); the prometheus and
-prometheus-node-exporter units; and prometheus-assemble.cs (prometheus.here dns + nginx vhost).
+prometheus-node-exporter units; and prometheus-assemble.cs (prometheus.internal dns + nginx vhost).
 cba_seed takes one sbom, hence prometheusCbs-sbom.pcs rather than both names here.
 #+end_org """
 

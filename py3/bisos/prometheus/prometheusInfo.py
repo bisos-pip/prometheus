@@ -15,7 +15,7 @@ checksums, the install/config/data paths, the EnvironmentFiles, the fqdn and the
 that writes them and the code that checks them (prometheusAdmin.cs -i driftCheck) cannot disagree.
 ** Status: Starting point.
 ** /[[elisp:(org-cycle)][| Planned Improvements |]]/ :
-*** TODO A login in front of prometheus.here (Prometheus has none; it listens on loopback only).
+*** TODO A login in front of prometheus.internal (Prometheus has none; it listens on loopback only).
 *** TODO Architectures other than amd64: add each one's checksum to the *Sha256 dicts.
 #+end_org """
 
@@ -78,13 +78,13 @@ class PrometheusInfo:
     nodeExporterEnvFile: pathlib.Path = pathlib.Path("/etc/default/prometheus-node-exporter")
 
     # Every listener binds loopback only: Prometheus and node_exporter have no authentication.
-    # nginx (prometheus.here) reaches Prometheus over loopback.
+    # nginx (prometheus.internal) reaches Prometheus over loopback.
     listenIp: str = "127.0.0.1"
 
     retentionTime: str = "15d"
     scrapeInterval: str = "15s"
 
-    fqdn: str = "prometheus.here"
+    fqdn: str = bannaTcpPorts.hereFqdn('prometheus')     # prometheus.internal
 
     portNu: int = dataclasses.field(default_factory=lambda: _bannaPortNu('prometheus'))
     nodeExporterPortNu: int = dataclasses.field(default_factory=lambda: _bannaPortNu('prometheusNodeExporter'))
@@ -226,7 +226,7 @@ def envFileContent(info: PrometheusInfo = prometheusInfo) -> str:
     """The content /etc/default/prometheus is generated with. Written only when absent.
 
     ARGS is expanded by the unit's ExecStart as separate words ($ARGS, not ${ARGS}).
-    --web.external-url makes the links Prometheus renders point at prometheus.here.
+    --web.external-url makes the links Prometheus renders point at prometheus.internal.
     """
     return (
         f'ARGS="--config.file={info.configFile} --storage.tsdb.path={info.dataDir}'

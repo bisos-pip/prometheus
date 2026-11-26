@@ -5,8 +5,8 @@
 *
 * Planted location: sys/cbm/collective/hereWeb/prometheus/cbmProc.spcs
 * Realm:            collective
-* CapabilityType:   hereWeb    (HTTP via .here fake domain)
-* CapabilityName:   prometheus (Prometheus accessible as prometheus.here)
+* CapabilityType:   hereWeb    (HTTP via .internal fake domain)
+* CapabilityName:   prometheus (Prometheus accessible as prometheus.internal)
 *
 * CBM sits on top of CBS --- it does NOT duplicate CBS content.
 * This file is a *pointer* to the CBS executable. cbm_* verbs

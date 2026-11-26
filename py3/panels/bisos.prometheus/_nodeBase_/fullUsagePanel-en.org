@@ -42,7 +42,7 @@
 ** +
 ** Overview
 bisos.prometheus runs Prometheus on a BISOS host as a hereWeb-collective capability,
-with node_exporter for the host's own metrics, browsed at http://prometheus.here.
+with node_exporter for the host's own metrics, browsed at http://prometheus.internal.
 See [[file:../../../../README.org][README.org]] for what is installed where, the listeners and the units.
 ** Entry points
 - [[file:../../../bin/prometheusAdmin.cs][prometheusAdmin.cs]] --- hostInfo, servicesInfo, queriesInfo, driftCheck
