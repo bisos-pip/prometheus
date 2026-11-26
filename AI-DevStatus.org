@@ -25,6 +25,13 @@ This file is maintained by Claude. Updates are typically triggered by the
 =/bx-status-update= slash command, after major interactions, or before a release.
 
 * Current State
+- 2026-11-26 (from a bisos-pip/b session; uncommitted, not released): the verify framework of
+  bisos-pip/capability AI-WorkPlan.org Stage 5. =driftCheck= now ends with =<name> verify: ok|fail
+  ...=, the line bisos.capability's =cbm_verify= reads (exit codes are not trusted, bisos-pip/b
+  Stage 4): a =_problem()= helper records what makes it fail (not installed, cannot read, unit
+  identity missing, link off its pin, ...); a diff against the generator stays a finding.
+  =py3/bin/cbmProc-prometheus.spcs= declares =verifyUnits= (prometheus, prometheus-node-exporter)
+  and =verifySpec="prometheusAdmin.cs -i driftCheck"=. Run here, read-only: ok.
 - 2026-11-26 (from a bisos-pip/b session): every =<name>.here= in this repo is now =<name>.internal=
   (=.here= is an https-only gTLD in Chrome; bisos-pip/banna AI-WorkPlan.org Stage 4, banna's
   =tcpPorts.hereFqdn=). Text renamed, not tested here; AI-WorkPlan.org keeps =.here= as history.

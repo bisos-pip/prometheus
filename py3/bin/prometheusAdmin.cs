@@ -403,6 +403,7 @@ class driftCheck(cs.Cmnd):
         _reportLink(prometheusInfo.homeLink, prometheusInfo.distDir(_arch()))
         _reportLink(prometheusInfo.nodeExporterLink, prometheusInfo.nodeExporterDir(_arch()))
 
+        print(_verdictLine("prometheus"))
         return cmndOutcome
 
 
@@ -424,11 +425,11 @@ def _reportKvDrift(livePath, generated) -> None:
     """KEY=VALUE files (EnvironmentFiles): missing / differs / extra, as kafkaAdmin.cs does."""
     print(f"* {livePath}")
     if not _exists(livePath):
-        print("  not installed")
+        _problem("  not installed")
         return
     liveText = pyRunAs.as_root_readFromFile(livePath)
     if not liveText:
-        print(f"  cannot read {livePath}")
+        _problem(f"  cannot read {livePath}")
         return
     drift = kvDrift(liveText, generated)
     for key in drift["missing"]:
@@ -445,11 +446,11 @@ def _reportTextDrift(livePath, generated) -> None:
     """Structured files (YAML, INI): a unified diff against the generator."""
     print(f"* {livePath}")
     if not _exists(livePath):
-        print("  not installed")
+        _problem("  not installed")
         return
     liveText = pyRunAs.as_root_readFromFile(livePath)
     if not liveText:
-        print(f"  cannot read {livePath}")
+        _problem(f"  cannot read {livePath}")
         return
     diff = textDrift(liveText, generated)
     if diff:
@@ -463,11 +464,11 @@ def _reportUnitDrift(unitName, envFile) -> None:
     unitPath = pathlib.Path(f"/etc/systemd/system/{unitName}.service")
     print(f"* {unitPath}")
     if not unitPath.exists():
-        print("  not installed")
+        _problem("  not installed")
         return
     lacking = unitDrift(unitPath.read_text(), envFile)
     for line in lacking:
-        print(f"  missing  {line}")
+        _problem(f"  missing  {line}")
     if not lacking:
         print("  identity lines agree (User, Group, EnvironmentFile)")
 
@@ -475,11 +476,30 @@ def _reportUnitDrift(unitName, envFile) -> None:
 def _reportLink(link, pinned) -> None:
     print(f"* {link}")
     if not link.exists():
-        print("  not installed")
+        _problem("  not installed")
     elif link.resolve() != pinned:
-        print(f"  points at {link.resolve()}, the pinned version is {pinned}")
+        _problem(f"  points at {link.resolve()}, the pinned version is {pinned}")
     else:
         print(f"  points at the pinned {pinned.name}")
+
+
+# The verdict of driftCheck, for bisos.capability's cbm_verify, which reads the last line
+# "<name> verify: ok|fail ..." and not the exit code (bisos-pip/b Stage 4). A diff against a
+# generator is a finding, not a problem: hand overrides are legitimate. A problem is what
+# _problem() prints: something not installed, unreadable, unpinned or missing.
+_problems: list[str] = []
+
+
+def _problem(line: str) -> None:
+    print(line)
+    _problems.append(line.strip())
+
+
+def _verdictLine(name: str) -> str:
+    if not _problems:
+        return f"{name} verify: ok"
+    shown = "; ".join(_problems[:3]) + (f"; and {len(_problems) - 3} more" if len(_problems) > 3 else "")
+    return f"{name} verify: fail {len(_problems)} problem(s): {shown}"
 
 
 ####+BEGIN: blee:bxPanel:foldingSection :outLevel 0 :sep nil :title "Main" :anchor ""  :extraInfo "Framework DBlock"

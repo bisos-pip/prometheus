@@ -26,4 +26,6 @@ from bisos.capability import cbmProc_seedInfo
 cbmProc_seedInfo.setup(
     capabilityName="prometheus",
     cbsSpec="/bisos/git/bxRepos/bisos-pip/prometheus/py3/bin/prometheus-cbs.pcs",
+    verifyUnits=["prometheus", "prometheus-node-exporter"],
+    verifySpec="prometheusAdmin.cs -i driftCheck",
 )
